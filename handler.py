@@ -1,9 +1,18 @@
 import theGame
+from Hero import Hero
+
 
 def heal(creature):
     """Heal the creature"""
     creature.hp += 3
     return True
+
+
+def feed(hero: Hero):
+    # feed hero
+    hero.satiety = hero.max_satiety
+    return True
+
 
 def teleport(creature, unique):
     """Teleport the creature"""
@@ -13,6 +22,7 @@ def teleport(creature, unique):
     theGame.theGame()._floor.put(c, creature)
     return unique
 
-def throw(power, loss):
+
+def shoot(power, loss):
     """Throw an object"""
     pass

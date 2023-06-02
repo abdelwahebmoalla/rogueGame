@@ -1,11 +1,12 @@
+import random
+
 from Coord import Coord
+from Creature import Creature
+from Element import Element
 from Hero import Hero
 from Room import Room
-from Element import Element
-from Creature import Creature
 from utils import sign
 
-import random
 
 class Map(object):
     """A map of a game floor.
@@ -16,21 +17,42 @@ class Map(object):
     empty = ' '  # A non walkable cell
 
     def __init__(self, size=20, hero=None):
+        self.size = size
         self._mat = []
         self._elem = {}
         self._rooms = []
         self._roomsToReach = []
-
+        self.showedCords = []
         for i in range(size):
             self._mat.append([Map.empty] * size)
+            self.showedCords.append([False] * size)
         if hero is None:
             hero = Hero()
         self._hero = hero
         self.generateRooms(7)
         self.reachAllRooms()
-        self.put(self._rooms[0].center(), hero)
+        heroInitialPosition = self._rooms[0].center()
+        self.put(heroInitialPosition, hero)
+        self.showedCords[heroInitialPosition.x][heroInitialPosition.y] = True
+        self.showSurroundingCords(heroInitialPosition)
         for r in self._rooms:
             r.decorate(self)
+
+    def showSurroundingCords(self, initialCord):
+        possibleCoords = []
+        for x in range(3):
+            for y in range(3):
+                possibleCoords += [Coord(x, y), Coord(x, -1 * y), Coord(-1 * x, y), Coord(-1 * x, -1 * y)]
+
+        # possibleCoords = [Coord(0, 1), Coord(0, -1), Coord(-1, 0, ), Coord(1, 0), Coord(1, 1), Coord(-1, 1),
+        #                   Coord(1, -1), Coord(-1, -1)]
+        for cord in possibleCoords:
+            try:
+                newCord = initialCord + cord
+                self.checkCoord(newCord)
+                self.showedCords[newCord.x][newCord.y] = True
+            except Exception as e:
+                pass
 
     def addRoom(self, room):
         """Adds a room in the map."""
@@ -165,6 +187,8 @@ class Map(object):
                 self._mat[orig.y][orig.x] = Map.ground
                 self._mat[dest.y][dest.x] = e
                 self._elem[e] = dest
+                if type(e) == Hero:
+                    self.showSurroundingCords(dest)
             elif self.get(dest) != Map.empty and self.get(dest).meet(e) and self.get(dest) != self._hero:
                 self.rm(dest)
 

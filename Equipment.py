@@ -1,5 +1,6 @@
-from Element import Element
 import theGame
+from Element import Element
+
 
 class Equipment(Element):
     """A piece of equipment"""
@@ -7,11 +8,13 @@ class Equipment(Element):
     def __init__(self, name, abbrv="", usage=None):
         Element.__init__(self, name, abbrv)
         self.usage = usage
-
     def meet(self, hero):
         """Makes the hero meet an element. The hero takes the element."""
-        hero.take(self)
-        theGame.theGame().addMessage("You pick up a " + self.name)
+        # check if creature is hero:
+        from Hero import Hero
+        if isinstance(hero, Hero):
+            hero.take(self)
+            theGame.theGame().addMessage("You pick up a " + self.name)
         return True
 
     def use(self, creature):

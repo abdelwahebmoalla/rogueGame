@@ -1,5 +1,5 @@
-from utils import getch
+# from utils import _find_getch
 import theGame
 
-getch = getch()
+# getch = _find_getch()
 theGame.theGame().play()
