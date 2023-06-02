@@ -140,10 +140,10 @@ class Game(object):
             return l[int(c)]
 
     def updategraph(self) -> None:
-        x = 128
+        y = 128
         self.canvas.delete("all")
         for n in range(self.size):
-            y = 128
+            x = 128
             for m in range(self.size):
                 # if self._floor.showedCords[n][m]:
                 if True:
@@ -161,8 +161,8 @@ class Game(object):
                                                  image=self.imageMapping.get("."))
                         self.canvas.create_image(x, y,
                                                  image=self.imageMapping.get(current_position_object.abbrv))
-                y += 32
-            x += 32
+                x += 32
+            y += 32
         self.canvas.create_text(85, 120, text=self.readMessages(), font="Arial 16 italic", fill="blue")
         self.canvas.create_text(85, 60, text=self._hero.description(), font="Arial 16 italic", fill="blue")
         self.canvas.pack()
