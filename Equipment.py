@@ -8,6 +8,7 @@ class Equipment(Element):
     def __init__(self, name, abbrv="", usage=None):
         Element.__init__(self, name, abbrv)
         self.usage = usage
+
     def meet(self, hero):
         """Makes the hero meet an element. The hero takes the element."""
         # check if creature is hero:
@@ -26,3 +27,7 @@ class Equipment(Element):
         else:
             theGame.theGame().addMessage("The " + creature.name + " uses the " + self.name)
             return self.usage(self, creature)
+
+
+class Gold(Equipment):
+    pass

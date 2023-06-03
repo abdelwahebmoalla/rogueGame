@@ -1,9 +1,10 @@
 import random
+from collections import deque
 
 from Coord import Coord
-from Creature import Creature
 from Element import Element
 from Hero import Hero
+from Monster import Monster
 from Room import Room
 from utils import sign
 
@@ -33,7 +34,7 @@ class Map(object):
         self.reachAllRooms()
         heroInitialPosition = self._rooms[0].center()
         self.put(heroInitialPosition, hero)
-        self.showedCords[heroInitialPosition.x][heroInitialPosition.y] = True
+        self.showedCords[heroInitialPosition.y][heroInitialPosition.x] = True
         self.showSurroundingCords(heroInitialPosition)
         for r in self._rooms:
             r.decorate(self)
@@ -50,7 +51,7 @@ class Map(object):
             try:
                 newCord = initialCord + cord
                 self.checkCoord(newCord)
-                self.showedCords[newCord.x][newCord.y] = True
+                self.showedCords[newCord.y][newCord.x] = True
             except Exception as e:
                 pass
 
@@ -178,10 +179,13 @@ class Map(object):
         del self._elem[self._mat[c.y][c.x]]
         self._mat[c.y][c.x] = Map.ground
 
-    def move(self, e, way):
+    def move(self, e, way, calculated_dest=None):
         """Moves the element e in the direction way."""
         orig = self.pos(e)
-        dest = orig + way
+        if calculated_dest:
+            dest = calculated_dest
+        else:
+            dest = orig + way
         if dest in self:
             if self.get(dest) == Map.ground:
                 self._mat[orig.y][orig.x] = Map.ground
@@ -198,7 +202,60 @@ class Map(object):
         h = self.pos(self._hero)
         for e in self._elem:
             c = self.pos(e)
-            if isinstance(e, Creature) and e != self._hero and c.distance(h) < 6:
-                d = c.direction(h)
-                if self.get(c + d) in [Map.ground, self._hero]:
-                    self.move(e, d)
+            if isinstance(e, Monster) and e != self._hero and c.distance(h) < 6:
+                for i in range(e.actionPerRole):
+                    c = self.pos(e)
+                    nextCord = self.getShortestNextMovement(c, h)
+                    if self.get(nextCord) in [Map.ground, self._hero]:
+                        self.move(e, None, nextCord)
+
+    def shortestRoute(self, start, end):
+        matrix = self._mat
+        # initialize a queue with the starting point
+        queue = deque([start])
+        # initialize a dictionary to store the distance and the previous node for each cell
+        visited = {start: (0, None)}
+        # initialize a list to store the route
+        route = []
+        # loop until the queue is empty or the end point is reached
+        while queue:
+            # get the current cell from the queue
+            x, y = queue.popleft()
+            # if the end point is reached, break the loop
+            if (x, y) == end:
+                break
+            # get the current distance and the previous node
+            dist, prev = visited[(x, y)]
+            # loop through the four possible directions: up, down, left, right
+            for dx, dy in [(0, 1), (0, -1), (1, 0), (-1, 0), (-1, -1), (1, -1), (1, 1), (-1, 0)]:
+                # get the next cell coordinates
+                nx = x + dx
+                ny = y + dy
+                # check if the next cell is valid and not visited
+                if 0 <= nx < len(matrix) and 0 <= ny < len(matrix[0]) and (nx, ny) not in visited and (
+                        matrix[ny][nx] == Map.ground or type(matrix[ny][nx]) == Hero):
+                    # add the next cell to the queue
+                    queue.append((nx, ny))
+                    # update the distance and the previous node for the next cell
+                    visited[(nx, ny)] = (dist + 1, (x, y))
+        # if the end point is not reached, return an empty route
+        if (x, y) != end:
+            return route
+        # otherwise, backtrack from the end point to the start point using the previous nodes
+        while (x, y) != start:
+            # add the current cell to the route
+            route.append((x, y))
+            # get the previous node
+            x, y = visited[(x, y)][1]
+        # reverse the route to get it from start to end
+        route.reverse()
+        # return the route
+        return route
+
+    def getShortestNextMovement(self, start, end):
+        start_cord = (start.x, start.y)
+        end_cord = (end.x, end.y)
+        shortest_route = self.shortestRoute(start_cord, end_cord)
+        if shortest_route:
+            return Coord(shortest_route[0][0], shortest_route[0][1])
+        return start

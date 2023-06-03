@@ -1,5 +1,6 @@
+import theGame
 from Creature import Creature
-from Equipment import Equipment
+from Equipment import Equipment, Gold
 from Weapon import Weapon
 
 XP_PER_LEVEL = 10
@@ -9,7 +10,7 @@ class Hero(Creature):
     """The hero of the game.
         Is a creature. Has an inventory of elements. """
 
-    def __init__(self, name="Hero", hp=10, abbrv="@", strength=2, defense=0, satiety=100, inventorySize=10):
+    def __init__(self, name="Hero", hp=50, abbrv="@", strength=2, defense=0, satiety=50, inventorySize=10):
         Creature.__init__(self, name, hp, abbrv, strength)
         self.xp = 0
         self.max_hp = hp
@@ -20,10 +21,11 @@ class Hero(Creature):
         self._inventory = []
         self._inventorySize = inventorySize
         self._activeWeapons = []
+        self.gold = 0
 
     def description(self):
         """Description of the hero"""
-        return Creature.description(self) + str(self._inventory)
+        return Creature.description(self)
 
     def fullDescription(self):
         """Complete description of the hero"""
@@ -59,11 +61,14 @@ class Hero(Creature):
     def take(self, elem):
         """The hero takes adds the equipment to its inventory"""
         self.checkEquipment(elem)
-        if len(self._inventory) >= self._inventorySize:
-            from main import theGame
-            theGame.theGame().addMessage(f"you reached maxmimum inventory size {self._inventorySize}")
+        if type(elem) == Gold:
+            self.gold += 1
         else:
-            self._inventory.append(elem)
+            if len(self._inventory) >= self._inventorySize:
+                theGame.theGame().addMessage(f"you reached maxmimum inventory size {self._inventorySize}")
+            else:
+                theGame.theGame().addMessage(f"element {elem.name} was added to inventory")
+                self._inventory.append(elem)
 
     def use(self, elem: Equipment):
         """Use a piece of equipment"""
@@ -100,11 +105,10 @@ class Hero(Creature):
 
     def rest(self):
         self.hp = self.hp + 5
-        from main import theGame
         for i in range(10):
             theGame.theGame()._floor.moveAllMonsters()
 
-    def consumeSatiety(self, statietyConsumed=1):
+    def consumeSatiety(self, statietyConsumed=3):
         if self.satiety > 0:
             self.satiety -= statietyConsumed
         else:
@@ -116,3 +120,15 @@ class Hero(Creature):
             weapon.usageCount -= 1
             if weapon.usageCount <= 0:
                 self.unequipWeapon(weapon)
+
+    def meet(self, monster):
+        """The hero is encountered by another creature(Monster).
+            The other one hits the creature. Return True if the creature is dead."""
+        theGame.theGame().addMessage(f"hero HP:{self.hp} meeting monster")
+        self.hp -= 0 if monster.strength - self.defense < 0 else monster.strength - self.defense
+        theGame.theGame().addMessage(f"hero Hp:{self.hp} after meeting monster")
+        monster.showInMap = True
+        theGame.theGame().addMessage("The " + monster.name + " hits the " + self.description())
+        if self.hp > 0:
+            return False
+        return True
